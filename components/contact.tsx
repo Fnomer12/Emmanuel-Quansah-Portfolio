@@ -148,22 +148,47 @@ function ContactInfo() {
 
 function ContactForm() {
   const [topic, setTopic] = useState(TOPICS[0]);
-  const [sent, setSent] = useState(false);
+  const [status, setStatus] = useState<"idle" | "sending" | "sent">("idle");
+  const plane = useRef<HTMLSpanElement>(null);
 
   const submit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (status === "sending") return;
+
     const f = new FormData(e.currentTarget);
     const name = String(f.get("name") ?? "");
     const from = String(f.get("email") ?? "");
     const message = String(f.get("message") ?? "");
     const subject = `${topic} enquiry from ${name}`;
     const body = `${message}\n\n— ${name}\n${from}`;
-    window.location.href = `mailto:${CONTACT.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    setSent(true);
+    const mailto = `mailto:${CONTACT.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+    setStatus("sending");
+
+    // Paper plane: little wind-up, then flies off up and to the right
+    gsap
+      .timeline({
+        onComplete: () => {
+          window.location.href = mailto;
+          setStatus("sent");
+          // Bring a fresh plane back into the circle
+          gsap.fromTo(
+            plane.current,
+            { x: -40, y: 20, rotation: 0, scale: 1, opacity: 0 },
+            { x: 0, y: 0, opacity: 1, duration: 0.6, delay: 1.2, ease: "back.out(2)" }
+          );
+        },
+      })
+      .to(plane.current, { x: -6, y: 4, rotation: 8, duration: 0.18, ease: "power2.out" })
+      .to(plane.current, { x: 40, y: -20, rotation: -12, duration: 0.25, ease: "power1.in" })
+      .to(plane.current, { x: 260, y: -240, rotation: -28, scale: 0.6, opacity: 0, duration: 0.75, ease: "power2.in" });
   };
 
   const field =
     "w-full bg-transparent border-b-2 border-black/15 py-3 text-lg outline-none transition-colors placeholder:text-black/30 focus:border-black";
+
+  const label =
+    status === "sending" ? "Sending…" : status === "sent" ? "Sent! Check your email app ✓" : "Send message";
 
   return (
     <form onSubmit={submit} className="c-reveal relative rounded-[2rem] bg-[#F4F4F0] p-6 md:p-10">
@@ -191,11 +216,19 @@ function ContactForm() {
 
       <button
         type="submit"
+        disabled={status === "sending"}
         className="group mt-10 w-full inline-flex items-center justify-between rounded-full bg-black text-white pl-7 pr-2 py-2 text-lg font-semibold transition-transform hover:-translate-y-0.5"
       >
-        {sent ? "Opening your email app…" : "Send message"}
-        <span className="w-11 h-11 rounded-full bg-[#CCFF00] text-black flex items-center justify-center transition-transform group-hover:rotate-[-45deg]">
-                  <SketchArrow shape="dash" weight={2.4} className="w-7 h-7" />
+        {label}
+        <span className="relative w-11 h-11 rounded-full bg-[#CCFF00] text-black flex items-center justify-center">
+          {/* Paper plane */}
+          <span ref={plane} className="inline-block" style={{ willChange: "transform" }}>
+            <svg viewBox="0 0 24 24" width={22} height={22} fill="none" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M21.5 2.5 2.8 9.6l7.4 3.2 3.2 7.6z" fill="#FFFFFF" stroke="#0A0A0A" strokeWidth="1.7" />
+              <path d="M21.5 2.5 10.2 12.8" stroke="#0A0A0A" strokeWidth="1.7" />
+              <path d="M10.2 12.8v4.6l2.3-2.4" stroke="#0A0A0A" strokeWidth="1.5" />
+            </svg>
+          </span>
         </span>
       </button>
 

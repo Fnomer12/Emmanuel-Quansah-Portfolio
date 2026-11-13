@@ -8,6 +8,7 @@ import { feature } from "topojson-client";
 import { geoContains } from "d3-geo";
 import type { FeatureCollection } from "geojson";
 import land110 from "world-atlas/land-110m.json";
+import SketchArrow from "@/components/sketch-arrow";
 
 gsap.registerPlugin(useGSAP, ScrollTrigger);
 
@@ -336,7 +337,12 @@ export default function Stats() {
                     {s.detail}
                   </span>
                   <span className="absolute inset-0 font-semibold translate-y-full opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100">
-                    {s.context}
+                    {s.context.split("→").map((part, k) => (
+                      <span key={k}>
+                        {k > 0 && <SketchArrow shape="dash" color="currentColor" weight={2.6} className="inline-block w-5 h-3 mx-1 align-middle" />}
+                        {part.trim()}
+                      </span>
+                    ))}
                   </span>
                 </dd>
 
